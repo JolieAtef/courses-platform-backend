@@ -4,8 +4,8 @@ import { deleteQuestion, updateQuestion } from "./question.service.js"
 
 let router = express.Router()
 
-router.put("/:id ",authenticate,authorize("teacher"),updateQuestion)
+router.put("/:id",authenticate,authorize("teacher"),updateQuestion)
 
-router.delete("/:id ",authenticate,authorize("teacher"),deleteQuestion)
+router.delete("/:id",authenticate,authorize("teacher"),deleteQuestion)
 
 export default router

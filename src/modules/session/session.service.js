@@ -3,10 +3,17 @@ import { sessionModel } from "../../database/models/session.model.js";
 
 export const addSession=async(req ,res)=>{
     let{courseId} = req.params
-    let{ title , order ,contentType, filePath, duration}=req.body
+    let{ title ,contentType, filePath, duration}=req.body
     let course = await courseModel.findById(courseId)
     if(!course){
       return res.json({message:"course not found"}) 
+    }
+    let order
+    let lastSession = await sessionModel.findOne({course:courseId }).sort({order:-1}).limit(1)
+    if(lastSession){
+         order = lastSession.order +1
+    }else{
+        order = 1
     }
     let addedSession= await sessionModel.insertMany({course:req.params.courseId ,title , order ,contentType, filePath, duration})
     if(addSession){
@@ -61,12 +68,13 @@ export const deleteSession = async(req ,res)=>{
     let session = await sessionModel.findById(id)
     if(!session){
       return res.json({message:"session not found"}) 
-    }
+    } 
 
     /// delete session file from uploads first
     
     let deletedSession = await sessionModel.findByIdAndDelete(id)
     if(deletedSession){
+        await sessionModel.updateMany({course:session.course , order:{ $gt: session.order }},{$inc:{order:-1}})
         res.json({message:"session deleted successfully"})
     }else{
         res.json({message:"session not found"})
@@ -74,6 +82,7 @@ export const deleteSession = async(req ,res)=>{
 }
 
 export const streamVideo = async (req, res) => {
+    res.json({message:"watching"})
     // 1. Find session by ID, verify student is enrolled
     // 2. Check student passed quiz of PREVIOUS session (if not first)
     // 3. Get filePath from session document

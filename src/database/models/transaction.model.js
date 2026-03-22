@@ -21,9 +21,7 @@ const transactionSchema = mongoose.Schema({
         required:true
     },
     cardNumber:{
-        type:mongoose.Schema.ObjectId,
-        ref:"teacher",
-        required:true
+        type:String
     },
     status:{
         type:String, 

@@ -11,6 +11,7 @@ export const subscribe =async(req ,res)=>{
         if(!cardNumber){
             return res.json({message:"cardNumber is required"})
         }
+        // validate card number
       let transaction = await transactionModel.insertMany({student:req.user.id , teacher:course.teacher , course:id ,amount:course.price , cardNumber , status:"success"})
       if(!transaction){
         return res.json({message:"something went wrong with transaction"})

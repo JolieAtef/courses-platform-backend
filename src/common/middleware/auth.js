@@ -53,7 +53,7 @@ export const authorize = (role)=>{
         if(user.role == role){
             next()
         }else{
-            return res.json({message:"user hasn`t access"})
+            return res.json({message:"user hasn't access"})
         }
     }
 }
@@ -76,7 +76,10 @@ export const courseIsOwner = async(req , res , next)=>{
 export const sessionIsOwner = async(req , res , next)=>{
     let session = await sessionModel.findById(req.params.id)
     if(!session){
-        return res.json({message:"session not found"}) 
+        session = await sessionModel.findById(req.params.sessionId)
+        if(!session){
+            return res.json({message:"session not found"}) 
+        }
     } 
     let course = await courseModel.findById(session.course)
         if(course.teacher == req.user.id){
@@ -88,24 +91,44 @@ export const sessionIsOwner = async(req , res , next)=>{
 
 export const isEnrolledCourse = async(req ,res , next )=>{
     let user = await userModel.findById(req.user.id)
-    let enrollment = await enrollmentModel.findOne({student:req.user.id , course:req.params.courseId})
-    if(enrollment || user.role=="teacher"){
+    if(user.role == "teacher"){
         next()
     }else{
-        res.json({message:"user didn`t enroll this course and not teacher"})
+        let enrollment = await enrollmentModel.findOne({student:req.user.id , course:req.params.courseId})
+        if(enrollment){
+            next()
+        }else{
+            res.json({message:"user didn't enroll this course and not teacher"})
+        }
     }
 }
 
 export const isEnrolledSession = async(req ,res , next )=>{
     let user = await userModel.findById(req.user.id)
-    let course = await courseModel.findOne({session:req.params.sessionId})
-    let session =await sessionModel.findById(req.params.sessionId)
-    let previousSession = await sessionModel.find({course:course._id , order:session.order-1})
-    let enrollment = await enrollmentModel.findOne({student:req.user.id , course})
-    if(enrollment.completedSessions.includes(previousSession._id) || user.role=="teacher"){
+    if(user.role == "teacher"){
         next()
     }else{
-        res.json({message:"user didn`t enroll this session and not teacher"})
+        let session =await sessionModel.findById(req.params.sessionId)
+        if(!session){
+            session = await sessionModel.findById(req.params.id)
+            if(!session){
+                return res.json({message:"session not found"}) 
+            }
+        }   
+        let enrollment = await enrollmentModel.findOne({student:req.user.id , course:session.course})
+        if(!enrollment){
+            return res.json({message:"user didn't enroll this course"})
+        }
+        if(session.order == 1){
+            next()
+        }else{
+            let previousSession = await sessionModel.findOne({course:session.course, order:session.order-1})
+            if(enrollment.completedSessions.some((id)=>id.toString() == previousSession._id.toString())){
+                next()
+            }else{
+                res.json({message:"user didn't complete previous session yet"})
+            }
+        }
     }
 }
 
