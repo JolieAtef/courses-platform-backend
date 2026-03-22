@@ -65,7 +65,6 @@ export const deleteQuestion = async(req ,res)=>{
 
 export const submit = async(req ,res)=>{
     let {sessionId} = req.params
-    // let [{questionId , answer}] = req.body
 
     let solutions = req.body.map(item => ({
         questionId: item.questionId,
