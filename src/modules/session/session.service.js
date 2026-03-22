@@ -1,9 +1,10 @@
 import { courseModel } from "../../database/models/course.model.js";
 import { sessionModel } from "../../database/models/session.model.js";
+import fs from "fs/promises";
 
 export const addSession=async(req ,res)=>{
     let{courseId} = req.params
-    let{ title ,contentType, filePath, duration}=req.body
+    let{ title ,contentType, duration}=req.body
     let course = await courseModel.findById(courseId)
     if(!course){
       return res.json({message:"course not found"}) 
@@ -14,6 +15,14 @@ export const addSession=async(req ,res)=>{
          order = lastSession.order +1
     }else{
         order = 1
+    }
+    let filePath
+    if(req.file){
+        if(contentType=="pdf"){
+            filePath=`localhost:3000/uploads/pdfs/${req.file.filename}`
+        }else if (contentType=="video"){
+            filePath=`localhost:3000/uploads/videos/${req.file.filename}`
+        }
     }
     let addedSession= await sessionModel.insertMany({course:req.params.courseId ,title , order ,contentType, filePath, duration})
     if(addSession){
@@ -50,10 +59,18 @@ export const getSessionData = async(req , res)=>{
 
 export const updateSession = async(req,res)=>{
     let {id} = req.params
-    let{ title , order ,contentType, filePath, duration}=req.body
+    let{ title , order ,contentType , duration}=req.body
     let session = await sessionModel.findById(id)
     if(!session){
       return res.json({message:"session not found"}) 
+    }
+    let filePath
+    if(req.file){
+        if(contentType=="pdf"){
+            filePath=`localhost:3000/uploads/pdfs/${req.file.filename}`
+        }else if (contentType=="video"){
+            filePath=`localhost:3000/uploads/videos/${req.file.filename}`
+        }
     }
     let updatedSession = await sessionModel.findByIdAndUpdate(id , { title , order ,contentType, filePath, duration},{new:true})
     if(updatedSession){
@@ -69,9 +86,15 @@ export const deleteSession = async(req ,res)=>{
     if(!session){
       return res.json({message:"session not found"}) 
     } 
-
     /// delete session file from uploads first
-    
+    if (session.filePath) {
+        try {
+          await fs.unlink(session.filePath);
+          } catch (err) {
+            console.log("File delete error:", err);
+          }    
+    }
+
     let deletedSession = await sessionModel.findByIdAndDelete(id)
     if(deletedSession){
         await sessionModel.updateMany({course:session.course , order:{ $gt: session.order }},{$inc:{order:-1}})

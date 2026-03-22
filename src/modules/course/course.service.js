@@ -1,13 +1,19 @@
+import multer from "multer";
 import { courseModel } from "../../database/models/course.model.js";
 import { userModel } from "../../database/models/user.model.js";
 
 
 export const addCourse = async(req ,res)=>{
-    let{title,description,price, thumbnail, category} = req.body
+    let{title,description,price, category} = req.body
     let existTeacher = await userModel.findById(req.user.id)
     if(!existTeacher){
         return res.json("teacher not found")
     }
+    let thumbnail=[]
+    if(req.files){
+       thumbnail = req.files.map((file)=>`http://localhost:3000/uploads/images/${file.filename}`) 
+    }
+    
     let addedCourse = await courseModel.insertMany({title,description,teacher:req.user.id,price, thumbnail, category})
     if(addedCourse){
         res.json({message:"course added successfully",addedCourse})
@@ -58,11 +64,15 @@ export const getCourseById = async(req ,res)=>{
 
 export const updateCourse = async(req ,res)=>{
     let {id} = req.params
-    let{title,description,price, thumbnail, category} = req.body
+    let{title,description,price, category} = req.body
     let existTeacher = await userModel.findById(req.user.id)
     if(!existTeacher){
         return res.json("teacher not found")
     }
+    let thumbnail=[]
+    if(req.files){
+       thumbnail = req.files.map((file)=>`http://localhost:3000/uploads/images/${file.filename}`) 
+      }
     let updatedCourse = await courseModel.findByIdAndUpdate(id ,{title,description,price, thumbnail, category},{new:true})
     if(updatedCourse){
         res.json({message:"course updated successfully",updatedCourse})

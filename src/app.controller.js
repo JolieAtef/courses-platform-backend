@@ -18,6 +18,10 @@ export const bootstrap=()=>{
   app.use("/questions",questionRouter)
   app.use(subscriptionRouter)
 
+  app.use("/uploads/images",express.static("uploads/images"))
+  app.use("/uploads/videos",express.static("uploads/videos"))
+  app.use("/uploads/pdfs",express.static("uploads/pdfs"))
+
   app.listen(3000,()=>{
        console.log("server running on port 3000")
   })

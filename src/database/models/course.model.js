@@ -20,8 +20,9 @@ export const courseSchema = mongoose.Schema({
         required:true
      },
      thumbnail:{
-        type:String
-     },
+        type:[String]
+       }
+      ,
      category:{
         type:String,
         required:true,

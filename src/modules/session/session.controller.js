@@ -4,11 +4,12 @@ import { deleteSession, downloadPdf, getSessionData, streamVideo, updateSession 
 import { addQuestion, getSessionQuestions, submit } from "../question/question.service.js"
 import { validation } from "../../../utils/validation.js"
 import { addQuestionSchema, submitQuestionsSchema } from "../question/question.validation.js"
+import { uploadFile } from "../../common/middleware/multer.js"
 
 let router = express.Router()
 router.get("/:id",authenticate, authorize("teacher"),sessionIsOwner,getSessionData)
 
-router.put("/:id",authenticate, authorize("teacher"),sessionIsOwner,updateSession)
+router.put("/:id",authenticate, authorize("teacher"),sessionIsOwner,uploadFile().single("filePath"),updateSession)
 
 router.delete("/:id",authenticate, authorize("teacher"),sessionIsOwner,deleteSession)
 
