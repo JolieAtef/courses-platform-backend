@@ -1,6 +1,7 @@
 import { courseModel } from "../../database/models/course.model.js";
 import { sessionModel } from "../../database/models/session.model.js";
-import fs from "fs/promises";
+import fs from "fs";
+
 
 export const addSession=async(req ,res)=>{
     let{courseId} = req.params
@@ -89,7 +90,8 @@ export const deleteSession = async(req ,res)=>{
     /// delete session file from uploads first
     if (session.filePath) {
         try {
-          await fs.unlink(session.filePath);
+          let filePath = session.filePath.replace("localhost:3000/", "")
+          await fs.unlink(filePath);
           } catch (err) {
             console.log("File delete error:", err);
           }    
@@ -105,24 +107,46 @@ export const deleteSession = async(req ,res)=>{
 }
 
 export const streamVideo = async (req, res) => {
-    res.json({message:"watching"})
-    // 1. Find session by ID, verify student is enrolled
-    // 2. Check student passed quiz of PREVIOUS session (if not first)
-    // 3. Get filePath from session document
-    // 4. const stat = fs.statSync(filePath)  →  get total file size
-    // 5. Parse req.headers.range  →  e.g. "bytes=0-"
-    // 6. Calculate start, end, chunkSize
-    // 7. Set headers and pipe the stream:
-    //    
-    //    
+    let {id} = req.params
+     let session = await sessionModel.findById(id)
+     if(!session){
+        return res.json({message:"session not found"})
+     }
+    
+     let filePath = session.filePath.replace("localhost:3000/", "")
+     const fileSize = fs.statSync(filePath).size
+     let {range} = req.headers
+     if (!range) {
+        return res.json({message:"Range is required"});
+      }
+     const parts = range.replace(/bytes=/, "").split("-");
+     const start = parseInt(parts[0], 10);
+     const end =  parseInt(parts[1], 10);
+     const chunkSize = end - start + 1;
+    
+    res.writeHead(206, {
+        "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+        "Accept-Ranges": "bytes",
+        "Content-Length": chunkSize,
+        "Content-Type": "video/mp4",
+      });
+    
+      const stream = fs.createReadStream(filePath, {
+        start,
+        end,
+      });
+    
+      stream.pipe(res);  
 };
 
 export const downloadPdf = async (req, res) => {
-    // 1. Find session by ID, verify student is enrolled
-    // 2. Check student passed quiz of PREVIOUS session (if not first)
-    // 3. Get filePath from session document
-    // 4. const stat = fs.statSync(filePath)  →  get total file size
-    // 5. Parse req.headers.range  →  e.g. "bytes=0-"
-    // 6. Calculate start, end, chunkSize
-    // 7. Set headers and pipe the stream:   
+    let {id} = req.params
+    let session = await sessionModel.findById(id)
+    if(!session){
+       return res.json({message:"session not found"})
+    }
+   
+    let filePath = session.filePath.replace("localhost:3000/", "")
+    res.download(filePath);
+
 };
